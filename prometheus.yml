@@ -1,0 +1,8 @@
+global:
+  scrape_interval: 15s # How often to scrape metrics
+
+scrape_configs:
+  - job_name: 'testrunner-app'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['testrunner-app:8080'] # Use the service name here

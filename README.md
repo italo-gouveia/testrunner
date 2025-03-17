@@ -28,6 +28,7 @@ A minimal test runner orchestration service that manages a pool of Android emula
 - **Simulation:** Random delays and outcomes for test execution.
 
 ## Running the Service
+### Locally: 
 1. Build the project:
    ```bash
    ./mvnw clean package
@@ -41,6 +42,19 @@ A minimal test runner orchestration service that manages a pool of Android emula
    
 3. Access the API at http://localhost:8080/swagger-ui/index.html.
 
+### By docker image:
+
+1. Build the docker:
+```bash
+    docker build -t testrunner-app .
+```
+
+2. Up the compose
+```bash
+    docker-compose up -d
+```
+
+3. Access the API at http://localhost:8080/swagger-ui/index.html.
 
 ### Submit a Test Run
 - **POST /api/v1/test-runs**
@@ -71,6 +85,13 @@ A minimal test runner orchestration service that manages a pool of Android emula
      }
      ```
 
+### Access Prometheus
+   Open your browser and navigate to http://localhost:9090. You should see the Prometheus UI.
+
+Go to Status > Targets to verify that Prometheus is successfully scraping metrics from your application.
+
+Use the Graph tab to query and visualize metrics (e.g., testruns_submitted_total).
+
 ## Design Decisions
 - **Simplicity:** Used in-memory data structures to keep the implementation lightweight.
 - **Concurrency:** Used a thread pool to handle multiple test runs concurrently.
@@ -82,7 +103,7 @@ A minimal test runner orchestration service that manages a pool of Android emula
 - **Configuration:** Hardcoding values like the worker pool size and test timeout limits makes the service inflexible. Let's use external configuration (e.g., application.properties or application.yml) to make these values configurable.
 - **Testing:** Let's Add unit and integration tests.
 - **Worker Management:** The current worker pool is static and doesn’t handle dynamic scaling or worker failures gracefully. Implement dynamic scaling and heartbeat mechanism.
-- **Deployment:** Containerize with Docker and set up CI/CD. 
+- **Deployment:** Set up CI/CD. 
 - **Security:**	Add authentication, authorization, and HTTPS.
 - **Readme Doc:** Update Diagrams for sequence/flow, architecture, data models etc.
 
