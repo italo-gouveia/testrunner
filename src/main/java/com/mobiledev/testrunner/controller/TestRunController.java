@@ -17,16 +17,34 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.MeterRegistry;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 @RestController
 @RequestMapping("/api/v1")
 @Tag(name = "Test Run API", description = "Endpoints for managing test runs")
 public class TestRunController {
 
-    private static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(TestRunController.class);
+    private static final Logger logger = LoggerFactory.getLogger(TestRunController.class);
 
+    // Micrometer counters
+    private final Counter testRunCounter;
+    private final Counter testRunSuccessCounter;
+    private final Counter testRunFailureCounter;
+
+    // Worker pool and test run storage
     private final Queue<String> workers = new ConcurrentLinkedQueue<>(Arrays.asList("worker1", "worker2", "worker3"));
     private final Map<String, TestRunStatus> testRuns = new ConcurrentHashMap<>();
     private final ExecutorService executorService = Executors.newCachedThreadPool();
+
+    public TestRunController(MeterRegistry registry) {
+        // Initialize counters
+        this.testRunCounter = registry.counter("testruns.submitted");
+        this.testRunSuccessCounter = registry.counter("testruns.completed", "status", "success");
+        this.testRunFailureCounter = registry.counter("testruns.completed", "status", "failure");
+    }
 
     // Health endpoint
     @Operation(summary = "Check service health", description = "Check if the service is running.")
@@ -46,16 +64,27 @@ public class TestRunController {
     })
     @PostMapping("/test-runs")
     public TestRunResponse submitTestRun(@RequestBody TestRunRequest request) {
+        // Increment the test run counter
+        testRunCounter.increment();
+
+        // Generate a unique run ID
         String runId = UUID.randomUUID().toString();
+
+        // Log the submission
+        logger.info("Test run submitted: runId={}, apkUrl={}, testScript={}, timeout={}",
+                runId, request.getApkUrl(), request.getTestScript(), request.getTimeout());
+
+        // Store the test run status
         testRuns.put(runId, new TestRunStatus(
                 "QUEUED",
                 request.getApkUrl(),
                 request.getTestScript(),
                 request.getTimeout()
         ));
-        logger.info("Test run submitted: " + runId);
-        // Submit the test run with retry logic
-        executorService.submit(() -> retryTestRun(runId, 3)); // Retry up to 3 times
+
+        // Execute the test run asynchronously
+        executorService.submit(() -> executeTestRun(runId));
+
         return new TestRunResponse(runId);
     }
 
@@ -69,6 +98,7 @@ public class TestRunController {
     public TestRunStatus getTestRunStatus(@PathVariable String runId) {
         TestRunStatus status = testRuns.get(runId);
         if (status == null) {
+            logger.warn("Test run not found: runId={}", runId);
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Test run not found");
         }
         return status;
@@ -83,12 +113,17 @@ public class TestRunController {
             // No workers available
             String errorMessage = "No workers available";
             logger.error("Test run {} failed: {}", runId, errorMessage);
+
+            // Update status and increment failure counter
             testRuns.put(runId, testRuns.get(runId).withStatus("FAILED").withError(errorMessage));
+            testRunFailureCounter.increment();
+
             return;
         }
 
         // Update test run status to RUNNING and assign the worker
         testRuns.put(runId, testRuns.get(runId).withStatus("RUNNING").withWorker(worker));
+        logger.info("Test run {} assigned to worker {}", runId, worker);
 
         try {
             // Simulate test execution with random delay
@@ -97,19 +132,32 @@ public class TestRunController {
 
             // Simulate pass/fail outcome
             if (new Random().nextBoolean()) {
+                // Test passed
                 Map<String, Object> results = new HashMap<>();
                 results.put("passed", true);
                 results.put("logs", "Test passed");
+
+                // Update status and increment success counter
                 testRuns.put(runId, testRuns.get(runId).withStatus("COMPLETED").withResults(results));
+                testRunSuccessCounter.increment();
+
+                logger.info("Test run {} completed successfully", runId);
             } else {
+                // Test failed
                 String errorMessage = "Test failed";
                 logger.error("Test run {} failed: {}", runId, errorMessage);
+
+                // Update status and increment failure counter
                 testRuns.put(runId, testRuns.get(runId).withStatus("FAILED").withError(errorMessage));
+                testRunFailureCounter.increment();
             }
         } catch (Exception e) {
             // Log the exception with stack trace
             logger.error("Test run {} failed with exception: {}", runId, e.getMessage(), e);
+
+            // Update status and increment failure counter
             testRuns.put(runId, testRuns.get(runId).withStatus("FAILED").withError(e.getMessage()));
+            testRunFailureCounter.increment();
         } finally {
             // Return the worker to the pool
             workers.add(worker);
@@ -117,10 +165,12 @@ public class TestRunController {
         }
     }
 
+    // Retry mechanism for failed test runs
     private void retryTestRun(String runId, int retryCount) {
         if (retryCount <= 0) {
             logger.error("Test run {} failed after maximum retries", runId);
             testRuns.put(runId, testRuns.get(runId).withStatus("FAILED").withError("Maximum retries exceeded"));
+            testRunFailureCounter.increment();
             return;
         }
 

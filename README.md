@@ -78,8 +78,7 @@ A minimal test runner orchestration service that manages a pool of Android emula
 
 ## Possible Improvements TBD
 - **Scalability:** It can be used a database or distributed cache for test run statuses.
-- **Error Handling:** Add a retry mechanism and detailed error logging.
-- **Monitoring:** Add metrics using a library like Micrometer and integrate with monitoring tools like Prometheus and Grafana.
+- **Monitoring:** Integrate the micrometer already in use in the application with monitoring tools like Prometheus and Grafana.
 - **Configuration:** Hardcoding values like the worker pool size and test timeout limits makes the service inflexible. Let's use external configuration (e.g., application.properties or application.yml) to make these values configurable.
 - **Testing:** Let's Add unit and integration tests.
 - **Worker Management:** The current worker pool is static and doesn’t handle dynamic scaling or worker failures gracefully. Implement dynamic scaling and heartbeat mechanism.
