@@ -84,7 +84,6 @@ A minimal test runner orchestration service that manages a pool of Android emula
 - **Configuration:** Hardcoding values like the worker pool size and test timeout limits makes the service inflexible. Let's use external configuration (e.g., application.properties or application.yml) to make these values configurable.
 - **Testing:** Let's Add unit and integration tests.
 - **Worker Management:** The current worker pool is static and doesn’t handle dynamic scaling or worker failures gracefully. Implement dynamic scaling and heartbeat mechanism.
-- **API Documentation:** Use Swagger/OpenAPI to generate API docs. 
 - **Deployment:** Containerize with Docker and set up CI/CD. 
 - **Security:**	Add authentication, authorization, and HTTPS.
 - **Readme Doc:** Update Diagrams for sequence/flow, architecture, data models etc.

@@ -1,5 +1,12 @@
-package com.mobiledev.testrunner;
+package com.mobiledev.testrunner.controller;
 
+import com.mobiledev.testrunner.dto.TestRunRequest;
+import com.mobiledev.testrunner.dto.TestRunResponse;
+import com.mobiledev.testrunner.dto.TestRunStatus;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
@@ -11,6 +18,7 @@ import java.util.concurrent.Executors;
 
 @RestController
 @RequestMapping("/api/v1")
+@Tag(name = "Test Run API", description = "Endpoints for managing test runs")
 public class TestRunController {
 
     private static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(TestRunController.class);
@@ -20,12 +28,21 @@ public class TestRunController {
     private final ExecutorService executorService = Executors.newCachedThreadPool();
 
     // Health endpoint
+    @Operation(summary = "Check service health", description = "Check if the service is running.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Service is healthy")
+    })
     @GetMapping("/health")
     public boolean health() {
         return true;
     }
 
     // Submit a test run
+    @Operation(summary = "Submit a test run", description = "Submit a new test run with an APK and test script.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Test run submitted successfully"),
+            @ApiResponse(responseCode = "400", description = "Invalid input")
+    })
     @PostMapping("/test-runs")
     public TestRunResponse submitTestRun(@RequestBody TestRunRequest request) {
         String runId = UUID.randomUUID().toString();
@@ -41,6 +58,11 @@ public class TestRunController {
     }
 
     // Check test run status
+    @Operation(summary = "Get test run status", description = "Retrieve the status of a test run by its ID.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Test run status retrieved successfully"),
+            @ApiResponse(responseCode = "404", description = "Test run not found")
+    })
     @GetMapping("/test-runs/{runId}")
     public TestRunStatus getTestRunStatus(@PathVariable String runId) {
         TestRunStatus status = testRuns.get(runId);

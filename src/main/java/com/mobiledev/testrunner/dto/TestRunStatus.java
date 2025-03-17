@@ -1,6 +1,5 @@
-package com.mobiledev.testrunner;
+package com.mobiledev.testrunner.dto;
 
-import lombok.Data;
 import lombok.Getter;
 
 import java.util.Map;
