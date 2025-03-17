@@ -36,8 +36,7 @@ public class TestRunController {
                 request.getTimeout()
         ));
         logger.info("Test run submitted: " + runId);
-        //TODO: Implement the executeTestRun method
-        //executorService.submit(() -> executeTestRun(runId));
+        executorService.submit(() -> executeTestRun(runId));
         return new TestRunResponse(runId);
     }
 
