@@ -77,7 +77,6 @@ A minimal test runner orchestration service that manages a pool of Android emula
 - **Error Handling:** Added robust error handling for invalid inputs and worker failures.
 
 ## Possible Improvements TBD
-- **Thread Safety:** Use ConcurrentLinkedQueue or something else for workers.
 - **Scalability:** It can be used a database or distributed cache for test run statuses.
 - **Error Handling:** Add a retry mechanism and detailed error logging.
 - **Monitoring:** Add metrics using a library like Micrometer and integrate with monitoring tools like Prometheus and Grafana.

@@ -13,6 +13,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -23,7 +24,7 @@ public class TestRunController {
 
     private static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(TestRunController.class);
 
-    private final List<String> workers = new ArrayList<>(Arrays.asList("worker1", "worker2", "worker3"));
+    private final Queue<String> workers = new ConcurrentLinkedQueue<>(Arrays.asList("worker1", "worker2", "worker3"));
     private final Map<String, TestRunStatus> testRuns = new ConcurrentHashMap<>();
     private final ExecutorService executorService = Executors.newCachedThreadPool();
 
@@ -74,12 +75,16 @@ public class TestRunController {
 
     // Simulate test execution
     private void executeTestRun(String runId) {
-        if (workers.isEmpty()) {
+        // Poll a worker from the queue (thread-safe operation)
+        String worker = workers.poll();
+
+        if (worker == null) {
+            // No workers available
             testRuns.put(runId, testRuns.get(runId).withStatus("FAILED").withError("No workers available"));
             return;
         }
 
-        String worker = workers.remove(0);
+        // Update test run status to RUNNING and assign the worker
         testRuns.put(runId, testRuns.get(runId).withStatus("RUNNING").withWorker(worker));
 
         try {
@@ -99,6 +104,7 @@ public class TestRunController {
         } catch (Exception e) {
             testRuns.put(runId, testRuns.get(runId).withStatus("FAILED").withError(e.getMessage()));
         } finally {
+            // Return the worker to the pool
             workers.add(worker);
             logger.info("Test run completed: " + runId);
         }
