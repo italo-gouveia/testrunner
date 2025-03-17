@@ -51,5 +51,36 @@ public class TestRunController {
         return status;
     }
 
+    // Simulate test execution
+    private void executeTestRun(String runId) {
+        if (workers.isEmpty()) {
+            testRuns.put(runId, testRuns.get(runId).withStatus("FAILED").withError("No workers available"));
+            return;
+        }
+
+        String worker = workers.remove(0);
+        testRuns.put(runId, testRuns.get(runId).withStatus("RUNNING").withWorker(worker));
+
+        try {
+            // Simulate test execution with random delay
+            int delay = new Random().nextInt(10) + 1;
+            Thread.sleep(delay * 1000L);
+
+            // Simulate pass/fail outcome
+            if (new Random().nextBoolean()) {
+                Map<String, Object> results = new HashMap<>();
+                results.put("passed", true);
+                results.put("logs", "Test passed");
+                testRuns.put(runId, testRuns.get(runId).withStatus("COMPLETED").withResults(results));
+            } else {
+                testRuns.put(runId, testRuns.get(runId).withStatus("FAILED").withError("Test failed"));
+            }
+        } catch (Exception e) {
+            testRuns.put(runId, testRuns.get(runId).withStatus("FAILED").withError(e.getMessage()));
+        } finally {
+            workers.add(worker);
+            logger.info("Test run completed: " + runId);
+        }
+    }
 
 }

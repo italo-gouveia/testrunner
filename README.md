@@ -40,3 +40,8 @@ A minimal test runner orchestration service that manages a pool of Android emula
    ```
    
 3. Access the API at http://localhost:8080.
+
+## Design Decisions
+- **Simplicity:** Used in-memory data structures to keep the implementation lightweight.
+- **Concurrency:** Used a thread pool to handle multiple test runs concurrently.
+- **Error Handling:** Added robust error handling for invalid inputs and worker failures.
