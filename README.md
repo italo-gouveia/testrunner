@@ -100,10 +100,7 @@ Use the Graph tab to query and visualize metrics (e.g., testruns_submitted_total
 ## Possible Improvements TBD
 - **Scalability:** It can be used a database or distributed cache for test run statuses.
 - **Monitoring:** Integrate the micrometer already in use in the application with monitoring tools like Prometheus and Grafana.
-- **Configuration:** Hardcoding values like the worker pool size and test timeout limits makes the service inflexible. Let's use external configuration (e.g., application.properties or application.yml) to make these values configurable.
-- **Testing:** Let's Add unit and integration tests.
 - **Worker Management:** The current worker pool is static and doesn’t handle dynamic scaling or worker failures gracefully. Implement dynamic scaling and heartbeat mechanism.
-- **Deployment:** Set up CI/CD. 
 - **Security:**	Add authentication, authorization, and HTTPS.
 - **Readme Doc:** Update Diagrams for sequence/flow, architecture, data models etc.
 

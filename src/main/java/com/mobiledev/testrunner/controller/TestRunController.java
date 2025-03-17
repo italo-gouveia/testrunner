@@ -7,6 +7,8 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
@@ -34,12 +36,22 @@ public class TestRunController {
     private final Counter testRunSuccessCounter;
     private final Counter testRunFailureCounter;
 
-    // Worker pool and test run storage
-    private final Queue<String> workers = new ConcurrentLinkedQueue<>(Arrays.asList("worker1", "worker2", "worker3"));
+    @Value("${worker.pool.size}")
+    private int workerPoolSize; // Injected from properties
+
+    @Value("${test.timeout.max}")
+    private int maxTestTimeout; // Injected from properties
+
     private final Map<String, TestRunStatus> testRuns = new ConcurrentHashMap<>();
     private final ExecutorService executorService = Executors.newCachedThreadPool();
 
+    private final Queue<String> workers;
+
     public TestRunController(MeterRegistry registry) {
+        this.workers = new ConcurrentLinkedQueue<>();
+        for (int i = 1; i <= workerPoolSize; i++) {
+            workers.add("worker" + i);
+        }
         // Initialize counters
         this.testRunCounter = registry.counter("testruns.submitted");
         this.testRunSuccessCounter = registry.counter("testruns.completed", "status", "success");
@@ -63,7 +75,12 @@ public class TestRunController {
             @ApiResponse(responseCode = "400", description = "Invalid input")
     })
     @PostMapping("/test-runs")
-    public TestRunResponse submitTestRun(@RequestBody TestRunRequest request) {
+    public TestRunResponse submitTestRun(@RequestBody @Valid TestRunRequest request) {
+        // Validate timeout
+        if (request.getTimeout() > maxTestTimeout) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Timeout exceeds maximum allowed value");
+        }
+
         // Increment the test run counter
         testRunCounter.increment();
 
