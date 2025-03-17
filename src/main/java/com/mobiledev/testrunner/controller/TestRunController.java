@@ -54,7 +54,8 @@ public class TestRunController {
                 request.getTimeout()
         ));
         logger.info("Test run submitted: " + runId);
-        executorService.submit(() -> executeTestRun(runId));
+        // Submit the test run with retry logic
+        executorService.submit(() -> retryTestRun(runId, 3)); // Retry up to 3 times
         return new TestRunResponse(runId);
     }
 
@@ -80,7 +81,9 @@ public class TestRunController {
 
         if (worker == null) {
             // No workers available
-            testRuns.put(runId, testRuns.get(runId).withStatus("FAILED").withError("No workers available"));
+            String errorMessage = "No workers available";
+            logger.error("Test run {} failed: {}", runId, errorMessage);
+            testRuns.put(runId, testRuns.get(runId).withStatus("FAILED").withError(errorMessage));
             return;
         }
 
@@ -99,15 +102,35 @@ public class TestRunController {
                 results.put("logs", "Test passed");
                 testRuns.put(runId, testRuns.get(runId).withStatus("COMPLETED").withResults(results));
             } else {
-                testRuns.put(runId, testRuns.get(runId).withStatus("FAILED").withError("Test failed"));
+                String errorMessage = "Test failed";
+                logger.error("Test run {} failed: {}", runId, errorMessage);
+                testRuns.put(runId, testRuns.get(runId).withStatus("FAILED").withError(errorMessage));
             }
         } catch (Exception e) {
+            // Log the exception with stack trace
+            logger.error("Test run {} failed with exception: {}", runId, e.getMessage(), e);
             testRuns.put(runId, testRuns.get(runId).withStatus("FAILED").withError(e.getMessage()));
         } finally {
             // Return the worker to the pool
             workers.add(worker);
-            logger.info("Test run completed: " + runId);
+            logger.info("Test run {} completed with status: {}", runId, testRuns.get(runId).getStatus());
         }
     }
 
+    private void retryTestRun(String runId, int retryCount) {
+        if (retryCount <= 0) {
+            logger.error("Test run {} failed after maximum retries", runId);
+            testRuns.put(runId, testRuns.get(runId).withStatus("FAILED").withError("Maximum retries exceeded"));
+            return;
+        }
+
+        logger.info("Retrying test run {} (attempts left: {})", runId, retryCount);
+        executeTestRun(runId);
+
+        // Check if the test run failed again
+        TestRunStatus status = testRuns.get(runId);
+        if ("FAILED".equals(status.getStatus())) {
+            retryTestRun(runId, retryCount - 1);
+        }
+    }
 }

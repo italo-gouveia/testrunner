@@ -39,7 +39,7 @@ A minimal test runner orchestration service that manages a pool of Android emula
     ./mvnw spring-boot:run
    ```
    
-3. Access the API at http://localhost:8080.
+3. Access the API at http://localhost:8080/swagger-ui/index.html.
 
 
 ### Submit a Test Run
