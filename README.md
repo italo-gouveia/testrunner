@@ -88,3 +88,22 @@ A minimal test runner orchestration service that manages a pool of Android emula
 - **Deployment:** Containerize with Docker and set up CI/CD. 
 - **Security:**	Add authentication, authorization, and HTTPS.
 - **Readme Doc:** Update Diagrams for sequence/flow, architecture, data models etc.
+
+## Contributing
+
+Contributions are welcome! Please follow these steps:
+
+1. Fork the repository.
+
+2. Create a new branch for your feature or bugfix.
+
+3. Commit your changes with clear and descriptive messages.
+
+4. Submit a pull request.
+
+## License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## Contact
+For questions or feedback, please reach out to italogouveiadev@outlook.com.
