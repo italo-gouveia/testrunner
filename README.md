@@ -41,6 +41,36 @@ A minimal test runner orchestration service that manages a pool of Android emula
    
 3. Access the API at http://localhost:8080.
 
+
+### Submit a Test Run
+- **POST /api/v1/test-runs**
+   - Request Body:
+     ```json
+     {
+       "apkUrl": "string",
+       "testScript": "string",
+       "timeout": "number"
+     }
+     ```
+   - Response:
+     ```json
+     {
+       "runId": "string"
+     }
+     ```
+
+### Check Test Run Status
+- **GET /api/v1/test-runs/{runId}**
+   - Response:
+     ```json
+     {
+       "status": "QUEUED|RUNNING|COMPLETED|FAILED",
+       "worker": "string",
+       "results": {...},
+       "error": "string"
+     }
+     ```
+
 ## Design Decisions
 - **Simplicity:** Used in-memory data structures to keep the implementation lightweight.
 - **Concurrency:** Used a thread pool to handle multiple test runs concurrently.
