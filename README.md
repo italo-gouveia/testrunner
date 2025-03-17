@@ -1,8 +1,7 @@
-# TestRunner Application
+# Test Runner Orchestrator (Java/Spring Boot)
 
 ## Description
-
-TBD
+A minimal test runner orchestration service that manages a pool of Android emulator workers.
 
 ## Implementation Plan
 ### Core Functionality:
@@ -25,5 +24,19 @@ TBD
 ### Tech Stack:
 - **Language:** Java.
 - **Framework:** Spring Boot.
-- **Libraries:** Jackson (for JSON serialization).
+- **Libraries:** Jackson (for JSON serialization), Lombok(for DTOs manipulations).
 - **Simulation:** Random delays and outcomes for test execution.
+
+## Running the Service
+1. Build the project:
+   ```bash
+   ./mvnw clean package
+   ```
+
+2. Start the server:
+
+    ```bash
+    ./mvnw spring-boot:run
+   ```
+   
+3. Access the API at http://localhost:8080.
