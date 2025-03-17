@@ -41,4 +41,15 @@ public class TestRunController {
         return new TestRunResponse(runId);
     }
 
+    // Check test run status
+    @GetMapping("/test-runs/{runId}")
+    public TestRunStatus getTestRunStatus(@PathVariable String runId) {
+        TestRunStatus status = testRuns.get(runId);
+        if (status == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Test run not found");
+        }
+        return status;
+    }
+
+
 }
